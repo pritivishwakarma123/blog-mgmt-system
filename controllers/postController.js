@@ -65,3 +65,43 @@ exports.getPosts = async (req, res) => {
     }
 };
 
+exports.getPostById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!mongoose.Type.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                message: "Invalid Post id"
+            });
+        }
+        const post = await Post.aggregate([
+            {
+                $match: {
+                    _id: new mongoose.Type.ObjectId(id)
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "author",
+                    foreignField: "_id",
+                    as: "$authorDetails"
+                }
+            },
+            { $unwind: "$authorDetails" }
+        ]);
+        if (!post || post.length === 0) {
+            return res.status(404).json({
+                message: "Post not found"
+            });
+        }
+        return res.status(200).json({
+            post: post[0]
+        });
+    } catch (error) {
+        console.error("Error in getPostById:", error);
+        res.status(500).json({
+            message: 'server error'
+        });
+    }
+}

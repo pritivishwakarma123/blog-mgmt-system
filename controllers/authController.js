@@ -49,7 +49,7 @@ exports.login = async (req, res) => {
         // ✅ Use consistent cookie name
         const cookieName = process.env.COOKIE_NAME || 'token';
 
-        res.cookie(cookieName, token, {
+        res.cookie("token", token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production'
         });

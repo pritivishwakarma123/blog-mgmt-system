@@ -1,5 +1,6 @@
 const { default: mongoose } = require('mongoose');
-const Post = require('../models/Post')
+const Post = require('../models/Post');
+const { json } = require('express');
 exports.createPost = async (req, res) => {
     try {
         const { title, body, tags } = req.body || {};
@@ -165,6 +166,47 @@ exports.updatePost = async (req, res) => {
         console.error("Error in update post");
         res.status(500).json({
             message: 'server error'
+        });
+    }
+};
+
+//! delete api for the post 
+exports.deletePost = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                message: "Invalid post id"
+            })
+        }
+        if (!req.user) {
+            return res.status(401).json({
+                message: "Unauthorized"
+            });
+        }
+
+        const post = await Post.findById(id);
+        if (!post) {
+            return res.status(400).json({
+                message: "Post not found"
+            });
+        }
+
+        if (post.author.toString() !== req.user._id.toString()) {
+            return res.status(403).json({
+                message: "You are not authorized to delete this post",
+            });
+        }
+        await Post.findByIdAndDelete(id);
+        res.status(200).json({
+            message: "Post deleted successfully! ✅"
+        });
+
+
+    } catch (err) {
+        console.error("Error in deletePost:", err);
+        res.status(500).json({
+            message: "server error"
         });
     }
 };
